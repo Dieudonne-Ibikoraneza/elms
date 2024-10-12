@@ -51,10 +51,9 @@ class Enrollment(models.Model):
         on_delete=models.CASCADE,
         related_name='enrollments'
     )
+    progress = models.IntegerField(default=0)
     enrolled_at = models.DateTimeField(auto_now_add=True)
-    completed = models.BooleanField(default=False)
-    completed_at = models.DateTimeField(null=True, blank=True)
-
+    
     class Meta:
         unique_together = ['student', 'course']
         ordering = ['-enrolled_at']

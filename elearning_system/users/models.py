@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import os
+from django.utils.translation import gettext_lazy as _
 
 class CustomUser(AbstractUser):
     STUDENT = 'student'
@@ -26,6 +27,12 @@ class CustomUser(AbstractUser):
         null=True,
         blank=True
     )
+    is_student = models.BooleanField(default=False)
+    is_instructor = models.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = _('user')
+        verbose_name_plural = _('users')
 
     def __str__(self):
         return self.username
@@ -39,7 +46,7 @@ def profile_image_path(instance, filename):
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    avatar = models.ImageField(upload_to=profile_image_path, null=True, blank=True)
+    avatar = models.ImageField(upload_to='profile_images/', null=True, blank=True)
     bio = models.TextField(max_length=500, blank=True)
 
     def __str__(self):
@@ -57,9 +64,12 @@ class Profile(models.Model):
         super().save(*args, **kwargs)
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_or_update_user_profile(sender, instance, created, **kwargs):
+def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
-    else:
-        # Get or create profile for existing users
-        Profile.objects.get_or_create(user=instance)
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def save_user_profile(sender, instance, **kwargs):
+    if not hasattr(instance, 'profile'):
+        Profile.objects.create(user=instance)
+    instance.profile.save()
