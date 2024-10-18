@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Manage Enrollments: {{ course.title }}</h3>
+                    <a href="{% url 'course_detail' course.id %}" class="btn btn-secondary">Back to Course</a>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if enrollments %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Email</th>
+                                        <th>Enrolled Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for enrollment in enrollments %}
+                                        <tr>
+                                            <td>{{ enrollment.student.get_full_name|default:enrollment.student.username }}</td>
+                                            <td>{{ enrollment.student.email }}</td>
+                                            <td>{{ enrollment.enrolled_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                {% if enrollment.completed %}
+                                                    <span class="badge bg-success">Completed</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">In Progress</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <form method="post" action="{% url 'remove_enrollment' course.id enrollment.id %}"
+                                                      onsubmit="return confirm('Are you sure you want to remove this student from the course?');"
+                                                      style="display: inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                        Remove
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            No students are currently enrolled in this course.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

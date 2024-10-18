@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Navigation</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'users:student_dashboard' %}" class="list-group-item list-group-item-action active">
+                        Dashboard
+                    </a>
+                    <a href="{% url 'home' %}" class="list-group-item list-group-item-action">
+                        Browse Courses
+                    </a>
+                    <a href="{% url 'users:profile' %}" class="list-group-item list-group-item-action">
+                        My Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <h2 class="mb-4">My Courses</h2>
+            
+            {% if enrollments %}
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {% for enrollment in enrollments %}
+                        <div class="col">
+                            <div class="card h-100">
+                                {% if enrollment.course.image %}
+                                    <img src="{{ enrollment.course.image.url }}" class="card-img-top" alt="{{ enrollment.course.title }}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ enrollment.course.title }}</h5>
+                                    <p class="card-text">{{ enrollment.course.description|truncatewords:20 }}</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            Instructor: {{ enrollment.course.instructor.get_full_name|default:enrollment.course.instructor.username }}
+                                        </small>
+                                    </p>
+                                    {% if enrollment.completed %}
+                                        <div class="alert alert-success mb-3">Completed</div>
+                                    {% else %}
+                                        <div class="progress mb-3">
+                                            <div class="progress-bar" role="progressbar" style="width: 0%;" 
+                                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer">
+                                    <a href="{% url 'courses:detail' enrollment.course.id %}" class="btn btn-primary w-100">
+                                        Continue Learning
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    You haven't enrolled in any courses yet. 
+                    <a href="{% url 'home' %}">Browse available courses</a>
+                </div>
+            {% endif %}
+
+            {% if recent_activities %}
+                <h3 class="mt-5 mb-4">Recent Activity</h3>
+                <div class="list-group">
+                    {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ activity.title }}</h5>
+                                <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                            </div>
+                            <p class="mb-1">{{ activity.description }}</p>
+                            <small class="text-muted">{{ activity.course.title }}</small>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

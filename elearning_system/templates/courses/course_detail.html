@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                {% if course.image %}
+                    <img src="{{ course.image.url }}" 
+                         class="card-img-top course-image" 
+                         alt="{{ course.title }}">
+                {% endif %}
+                
+                <div class="card-header">
+                    <h3 class="mb-0">{{ course.title }}</h3>
+                </div>
+                
+                <div class="card-body">
+                    <p class="text-muted">
+                        <strong>Instructor:</strong> {{ course.instructor.get_full_name }}
+                    </p>
+                    <p>{{ course.description }}</p>
+
+                    {% if not is_course_instructor %}
+                        {% if is_enrolled %}
+                            <div class="alert alert-success d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-check-circle"></i> You are enrolled in this course
+                                </div>
+                                <form method="post" action="{% url 'courses:unenroll' course.id %}" 
+                                      onsubmit="return confirm('Are you sure you want to unenroll from this course? You will lose access to all course content.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-user-minus"></i> Unenroll
+                                    </button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Enroll to access course content
+                            </div>
+                            <form method="post" action="{% url 'courses:enroll' course.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-user-plus"></i> Enroll in Course
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+
+                    <!-- Course Content Section -->
+                    {% if is_course_instructor or is_enrolled %}
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0">Course Content</h4>
+                                {% if is_course_instructor %}
+                                    <a href="{% url 'courses:manage_content' course.id %}" class="btn btn-primary btn-sm">
+                                        Add Course Content
+                                    </a>
+                                {% endif %}
+                            </div>
+
+                            {% if course_contents %}
+                                <div class="list-group">
+                                    {% for content in course_contents %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h5 class="mb-1">{{ content.title }}</h5>
+                                                    <p class="mb-1">
+                                                        <span class="badge bg-secondary">{{ content.get_content_type_display }}</span>
+                                                        <small class="text-muted ms-2">
+                                                            Added on {{ content.created_at|date:"M d, Y" }}
+                                                        </small>
+                                                    </p>
+                                                    {% if content.description %}
+                                                        <p class="mb-2">{{ content.description }}</p>
+                                                    {% endif %}
+                                                    <div class="btn-group">
+                                                        <a href="{{ content.file.url }}" 
+                                                           class="btn btn-sm btn-primary" 
+                                                           download>
+                                                            Download
+                                                        </a>
+                                                        {% if is_course_instructor %}
+                                                            <form method="post" 
+                                                                  action="{% url 'courses:delete_content' course.id content.id %}"
+                                                                  class="d-inline-block ms-2"
+                                                                  onsubmit="return confirm('Are you sure you want to delete this content?');">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                                            </form>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <span class="badge bg-light text-dark">
+                                                    Order: {{ content.order }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    No content has been added to this course yet.
+                                    {% if is_course_instructor %}
+                                        <a href="{% url 'courses:manage_content' course.id %}" class="alert-link">
+                                            Add some content
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% elif not is_enrolled %}
+                        <div class="alert alert-warning mt-4">
+                            <i class="fas fa-lock"></i> Course content is only available to enrolled students.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Course Information</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% if is_course_instructor %}
+                        <!-- Show all information for instructor -->
+                        <li class="mb-2">
+                            <i class="fas fa-calendar-alt"></i>
+                            Created: {{ course.created_at|date:"M d, Y" }}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-users"></i>
+                            Students Enrolled: {{ enrolled_count|default:"0" }}
+                        </li>
+                        {% if course.contents.all %}
+                            <li>
+                                <i class="fas fa-file-alt"></i>
+                                Content Items: {{ course.contents.count }}
+                            </li>
+                        {% endif %}
+                        {% else %}
+                        <!-- Show limited information for students -->
+                        <li class="mb-2">
+                            <i class="fas fa-calendar-alt"></i>
+                            Created: {{ course.created_at|date:"M d, Y" }}
+                        </li>
+                        {% if course.contents.all %}
+                            <li>
+                                <i class="fas fa-file-alt"></i>
+                                Content Items: {{ course.contents.count }}
+                            </li>
+                        {% endif %}
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            {% if not is_course_instructor %}
+            <!-- Additional information for students -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Course Instructor</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        {{ course.instructor.get_full_name }}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if is_course_instructor and enrolled_students %}
+            <!-- New Enrolled Students card -->
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Enrolled Students</h5>
+                    <span class="badge bg-primary">{{ enrolled_students|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for enrollment in enrolled_students %}
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2"
+                                     style="width: 40px; height: 40px;">
+                                    {{ enrollment.student.first_name|first|upper }}
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">
+                                        <a href="{% url 'users:profile' enrollment.student.id %}" 
+                                           class="text-decoration-none">
+                                            {{ enrollment.student.get_full_name }}
+                                        </a>
+                                    </h6>
+                                    <small class="text-muted">
+                                        Enrolled: {{ enrollment.enrolled_at|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .course-image {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        object-position: center;
+    }
+    
+    .list-group-item {
+        border-left: 4px solid #6c757d;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+    }
+    
+    .gap-2 {
+        gap: 0.5rem;
+    }
+    
+    .alert-info a {
+        text-decoration: underline;
+    }
+
+    .btn-group .btn {
+        margin-right: 0.25rem;
+    }
+
+    .list-group-item .badge.bg-light {
+        font-size: 0.75rem;
+    }
+
+    .alert-info {
+        margin-bottom: 0;
+    }
+
+    .card-body i {
+        width: 20px;
+        margin-right: 8px;
+        text-align: center;
+    }
+
+    .list-group-flush .list-group-item {
+        border-left: none;
+        padding: 0.75rem 1rem;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .list-group-item a {
+        color: #212529;
+    }
+
+    .list-group-item a:hover {
+        color: #0d6efd;
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+
+    .alert .btn-danger {
+        transition: all 0.3s ease;
+    }
+
+    .alert .btn-danger:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        transform: scale(1.05);
+    }
+
+    .alert form {
+        margin: 0;
+    }
+
+    .alert.alert-success {
+        border-left: 4px solid #198754;
+    }
+
+    .alert i {
+        margin-right: 8px;
+    }
+</style>
+{% endblock %} 
