@@ -134,16 +134,48 @@
 
         <!-- Expertise Section (for instructors) -->
         {% if is_instructor %}
-        <div class="profile-card skills-card">
+        <div class="profile-card expertise-card">
           <div class="card-header">
-            <h2><i class="fas fa-star"></i> Expertise</h2>
+            <h2><i class="fas fa-star"></i> Areas of Expertise</h2>
+            {% if is_owner %}
+            <button class="btn-icon edit-expertise-btn" data-bs-toggle="modal" data-bs-target="#expertiseModal">
+              <i class="fas fa-pencil-alt"></i>
+            </button>
+            {% endif %}
           </div>
           <div class="card-body">
-            <div class="skills-grid">
-              <div class="skill-item">Course Development</div>
-              <div class="skill-item">Online Teaching</div>
-              <div class="skill-item">Student Mentoring</div>
+            {% if profile_user.profile.expertise.all %}
+            <div class="expertise-tags">
+              {% for expertise in profile_user.profile.expertise.all %}
+              <span class="expertise-tag">{{ expertise.name }}</span>
+              {% endfor %}
             </div>
+            {% else %}
+            <p class="text-muted">No expertise added yet.</p>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <!-- Skills Section for Students -->
+        <div class="profile-card skills-card">
+          <div class="card-header">
+            <h2><i class="fas fa-tools"></i> Skills</h2>
+            {% if is_owner %}
+            <button class="btn-icon edit-skills-btn" data-bs-toggle="modal" data-bs-target="#skillsModal">
+              <i class="fas fa-pencil-alt"></i>
+            </button>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            {% if profile_user.profile.skills.all %}
+            <div class="skills-tags">
+              {% for skill in profile_user.profile.skills.all %}
+              <span class="skill-tag">{{ skill.name }}</span>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No skills added yet.</p>
+            {% endif %}
           </div>
         </div>
         {% endif %}
@@ -273,6 +305,83 @@
     </div>
   </div>
 </div>
+
+<!-- Modals for editing -->
+{% if is_owner %}
+  {% if is_instructor %}
+    <!-- Expertise Edit Modal -->
+    <div class="modal fade" id="expertiseModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Expertise</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <form method="post" action="{% url 'users:update_expertise' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+              {{ expertise_form }}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Save changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <!-- Skills Edit Modal -->
+    <div class="modal fade" id="skillsModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Skills</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <form method="post" action="{% url 'users:update_skills' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+              {{ skills_form }}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Save changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
+
+<style>
+.expertise-tags,
+.skills-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.expertise-tag,
+.skill-tag {
+    background-color: #e9ecef;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.expertise-tag {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.skill-tag {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+}
+</style>
 
 {% endblock %} {% block extra_js %}
 <script>

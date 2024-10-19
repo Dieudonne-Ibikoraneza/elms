@@ -1,10 +1,5 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.conf import settings
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-import os
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import AbstractUser
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
@@ -15,30 +10,36 @@ class CustomUser(AbstractUser):
     is_instructor = models.BooleanField(default=False)
     is_student = models.BooleanField(default=True)
 
-    def __str__(self):
-        return self.username
+    def save(self, *args, **kwargs):
+        if self.role == 'instructor':
+            self.is_instructor = True
+            self.is_student = False
+        else:
+            self.is_student = True
+            self.is_instructor = False
+        super().save(*args, **kwargs)
 
-def profile_image_path(instance, filename):
-    # Get the file extension
-    ext = filename.split('.')[-1]
-    # Create filename as user_id.extension
-    filename = f'{instance.user.id}.{ext}'
-    return os.path.join('profile_images', filename)
+class Expertise(models.Model):
+    name = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        verbose_name_plural = "Expertise"
+
+class Skill(models.Model):
+    name = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.name
 
 class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     avatar = models.ImageField(upload_to='profile_images/', null=True, blank=True)
     bio = models.TextField(max_length=500, blank=True)
-
+    expertise = models.ManyToManyField(Expertise, blank=True)
+    skills = models.ManyToManyField(Skill, blank=True)
+    
     def __str__(self):
         return f"{self.user.username}'s profile"
-
-# Signal to create profile
-@receiver(post_save, sender=CustomUser)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-
-@receiver(post_save, sender=CustomUser)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()

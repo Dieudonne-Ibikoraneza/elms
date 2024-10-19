@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .forms import UserRegistrationForm, UserUpdateForm, ProfileUpdateForm
+from .forms import UserRegistrationForm, UserUpdateForm, ProfileUpdateForm, InstructorProfileForm, StudentProfileForm
 from django.contrib.auth import login
 from courses.models import Enrollment
 from django.contrib.auth import get_user_model
@@ -13,6 +13,9 @@ import os
 from django.db.models import Count
 from django.db import transaction
 import logging
+from .models import Skill
+from .forms import SkillsUpdateForm
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -40,18 +43,15 @@ def register(request):
     return render(request, 'registration/register.html', {'form': form})
 
 @login_required
-def profile(request):
-    if request.method == 'POST':
-        form = UserUpdateForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Your profile has been updated!')
-            return redirect('users:profile')
-    else:
-        form = UserUpdateForm(instance=request.user)
+def profile(request, user_id):
+    profile_user = get_object_or_404(User, id=user_id)
+    user_profile = get_object_or_404(Profile, user=profile_user)
     
     context = {
-        'form': form
+        'profile': user_profile,
+        'profile_user': profile_user,
+        'is_owner': request.user == profile_user,
+        'skills': user_profile.skills.all().select_related(),  # Optimize query
     }
     return render(request, 'users/profile.html', context)
 
@@ -85,52 +85,49 @@ def instructor_dashboard(request):
 @login_required
 def profile_view(request, user_id):
     profile_user = get_object_or_404(User, id=user_id)
-    profile = getattr(profile_user, 'profile', None)  # Get profile if it exists
+    is_owner = request.user == profile_user
+    is_instructor = profile_user.role == 'instructor'
     
     context = {
         'profile_user': profile_user,
-        'profile': profile,
-        'is_owner': request.user == profile_user,
-        'is_instructor': profile_user.role == 'instructor' or profile_user.is_instructor,
+        'is_owner': is_owner,
+        'is_instructor': is_instructor,
     }
     
-    if context['is_instructor']:
-        instructor_courses = profile_user.courses.all()
-        total_students = sum(course.enrolled_students.count() for course in instructor_courses)
-        
-        # Calculate average rating (if you have a rating system)
-        total_ratings = 0
-        rated_courses = 0
-        for course in instructor_courses:
-            if hasattr(course, 'average_rating') and course.average_rating:
-                total_ratings += course.average_rating
-                rated_courses += 1
-        
-        avg_rating = round(total_ratings / rated_courses, 1) if rated_courses > 0 else 0
-        
-        context.update({
-            'total_courses': instructor_courses.count(),
-            'total_students': total_students,
-            'average_rating': avg_rating,
-            'instructor_courses': instructor_courses,
-        })
-    else:
-        # Student specific stats
-        enrollments = Enrollment.objects.filter(student=profile_user)
-        completed_courses = enrollments.filter(progress=100).count()
-        total_enrolled = enrollments.count()
-        
-        # Calculate completion rate
-        completion_rate = (completed_courses / total_enrolled * 100) if total_enrolled > 0 else 0
-        
-        context.update({
-            'enrolled_courses': enrollments,
-            'completed_courses_count': completed_courses,
-            'completion_rate': round(completion_rate, 1),
-            'total_courses': total_enrolled
-        })
+    if is_owner:
+        if is_instructor:
+            context['expertise_form'] = InstructorProfileForm(instance=profile_user.profile)
+        else:
+            context['skills_form'] = StudentProfileForm(instance=profile_user.profile)
     
     return render(request, 'users/profile.html', context)
+
+@login_required
+def update_expertise(request):
+    if request.method == 'POST' and request.user.is_instructor:
+        form = InstructorProfileForm(request.POST, instance=request.user.profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Expertise updated successfully!')
+    return redirect('users:profile', user_id=request.user.id)
+
+@login_required
+def update_skills(request):
+    if request.method == 'POST':
+        form = SkillsUpdateForm(request.POST, instance=request.user.profile)
+        if form.is_valid():
+            profile = form.save()
+            messages.success(request, 'Your skills have been updated successfully!')
+            # Redirect to the profile view with the user's ID
+            return redirect(reverse('users:profile', kwargs={'user_id': request.user.id}))
+    else:
+        form = SkillsUpdateForm(instance=request.user.profile)
+    
+    context = {
+        'form': form,
+        'all_skills': Skill.objects.all()
+    }
+    return render(request, 'users/update_skills.html', context)
 
 @login_required
 def edit_profile(request):

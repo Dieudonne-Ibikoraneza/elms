@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
-from .models import Profile
+from .models import Profile, Expertise, Skill
 
 User = get_user_model()
 
@@ -60,3 +60,34 @@ class ProfileUpdateForm(forms.ModelForm):
             'bio': forms.Textarea(attrs={'rows': 4}),
             'avatar': forms.FileInput(attrs={'class': 'form-control'})
         }
+
+class InstructorProfileForm(ProfileUpdateForm):
+    expertise = forms.ModelMultipleChoiceField(
+        queryset=Expertise.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+    
+    class Meta(ProfileUpdateForm.Meta):
+        fields = ProfileUpdateForm.Meta.fields + ['expertise']
+
+class StudentProfileForm(ProfileUpdateForm):
+    skills = forms.ModelMultipleChoiceField(
+        queryset=Skill.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+    
+    class Meta(ProfileUpdateForm.Meta):
+        fields = ProfileUpdateForm.Meta.fields + ['skills']
+
+class SkillsUpdateForm(forms.ModelForm):
+    skills = forms.ModelMultipleChoiceField(
+        queryset=Skill.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+
+    class Meta:
+        model = Profile
+        fields = ['skills']

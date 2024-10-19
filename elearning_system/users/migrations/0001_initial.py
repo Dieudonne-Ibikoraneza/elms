@@ -47,12 +47,31 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='Expertise',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=100)),
+            ],
+            options={
+                'verbose_name_plural': 'Expertise',
+            },
+        ),
+        migrations.CreateModel(
+            name='Skill',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=100)),
+            ],
+        ),
+        migrations.CreateModel(
             name='Profile',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('avatar', models.ImageField(blank=True, null=True, upload_to='profile_images/')),
                 ('bio', models.TextField(blank=True, max_length=500)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('expertise', models.ManyToManyField(blank=True, to='users.expertise')),
+                ('skills', models.ManyToManyField(blank=True, to='users.skill')),
+                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='users.customuser')),
             ],
         ),
     ]
