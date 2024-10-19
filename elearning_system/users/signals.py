@@ -8,8 +8,12 @@ User = get_user_model()
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
+        Profile.objects.get_or_create(user=instance)
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    Profile.objects.get_or_create(user=instance) 
+    try:
+        profile = Profile.objects.get(user=instance)
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(user=instance)
+    profile.save() 

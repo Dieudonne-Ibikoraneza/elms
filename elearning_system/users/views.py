@@ -11,16 +11,30 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 import os
 from django.db.models import Count
+from django.db import transaction
+import logging
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 def register(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            messages.success(request, 'Registration successful! You can now log in.')
-            return redirect('login')
+            try:
+                with transaction.atomic():
+                    user = form.save()
+                    logger.info(f"User created successfully: {user.username}")
+                    messages.success(request, 'Registration successful! You can now log in.')
+                    return redirect('users:login')
+            except Exception as e:
+                logger.error(f"Registration error: {str(e)}")
+                messages.error(request, f'Registration error: {str(e)}')
+                return redirect('users:register')
+        else:
+            logger.error(f"Form validation errors: {form.errors}")
+            messages.error(request, f'Form validation errors: {form.errors}')
     else:
         form = UserRegistrationForm()
     return render(request, 'registration/register.html', {'form': form})

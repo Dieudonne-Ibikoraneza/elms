@@ -9,8 +9,14 @@ class UserRegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(required=True)
     last_name = forms.CharField(required=True)
+    
+    ROLE_CHOICES = [
+        ('student', 'Student'),
+        ('instructor', 'Instructor'),
+    ]
+    
     role = forms.ChoiceField(
-        choices=[('student', 'Student'), ('instructor', 'Instructor')],
+        choices=ROLE_CHOICES,
         widget=forms.RadioSelect,
         initial='student'
     )
@@ -25,8 +31,14 @@ class UserRegistrationForm(UserCreationForm):
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
         user.role = self.cleaned_data['role']
+        
         if user.role == 'instructor':
             user.is_instructor = True
+            user.is_student = False
+        else:
+            user.is_student = True
+            user.is_instructor = False
+            
         if commit:
             user.save()
         return user

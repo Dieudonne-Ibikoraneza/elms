@@ -15,8 +15,8 @@
                         
                         <!-- Username field -->
                         <div class="form-group mb-3">
-                            {{ form.username.label_tag }}
-                            {{ form.username|add_class:"form-control" }}
+                            <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" id="{{ form.username.id_for_label }}" required>
                             {% if form.username.errors %}
                                 <div class="alert alert-danger mt-1">
                                     {{ form.username.errors }}
@@ -26,8 +26,8 @@
 
                         <!-- Email field -->
                         <div class="form-group mb-3">
-                            {{ form.email.label_tag }}
-                            {{ form.email|add_class:"form-control" }}
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" id="{{ form.email.id_for_label }}" required>
                             {% if form.email.errors %}
                                 <div class="alert alert-danger mt-1">
                                     {{ form.email.errors }}
@@ -37,8 +37,8 @@
 
                         <!-- First Name field -->
                         <div class="form-group mb-3">
-                            {{ form.first_name.label_tag }}
-                            {{ form.first_name|add_class:"form-control" }}
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
+                            <input type="text" name="first_name" class="form-control" id="{{ form.first_name.id_for_label }}" required>
                             {% if form.first_name.errors %}
                                 <div class="alert alert-danger mt-1">
                                     {{ form.first_name.errors }}
@@ -48,8 +48,8 @@
 
                         <!-- Last Name field -->
                         <div class="form-group mb-3">
-                            {{ form.last_name.label_tag }}
-                            {{ form.last_name|add_class:"form-control" }}
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                            <input type="text" name="last_name" class="form-control" id="{{ form.last_name.id_for_label }}" required>
                             {% if form.last_name.errors %}
                                 <div class="alert alert-danger mt-1">
                                     {{ form.last_name.errors }}
@@ -74,8 +74,8 @@
 
                         <!-- Password field -->
                         <div class="form-group mb-3">
-                            {{ form.password1.label_tag }}
-                            {{ form.password1|add_class:"form-control" }}
+                            <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
+                            <input type="password" name="password1" class="form-control" id="{{ form.password1.id_for_label }}" required>
                             {% if form.password1.errors %}
                                 <div class="alert alert-danger mt-1">
                                     {{ form.password1.errors }}
@@ -86,8 +86,8 @@
 
                         <!-- Confirm Password field -->
                         <div class="form-group mb-3">
-                            {{ form.password2.label_tag }}
-                            {{ form.password2|add_class:"form-control" }}
+                            <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm Password</label>
+                            <input type="password" name="password2" class="form-control" id="{{ form.password2.id_for_label }}" required>
                             {% if form.password2.errors %}
                                 <div class="alert alert-danger mt-1">
                                     {{ form.password2.errors }}
@@ -101,7 +101,7 @@
                     </form>
                 </div>
                 <div class="card-footer text-center">
-                    Already have an account? <a href="{% url 'login' %}">Login</a>
+                    Already have an account? <a href="{% url 'users:login' %}">Login</a>
                 </div>
             </div>
         </div>
