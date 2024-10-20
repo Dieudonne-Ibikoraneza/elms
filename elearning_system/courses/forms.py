@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Course, Category, CourseContent
+from .models import Course, CourseContent
 
 class CourseForm(forms.ModelForm):
     class Meta:
@@ -13,13 +13,6 @@ class CourseForm(forms.ModelForm):
             'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
-class CategoryForm(forms.ModelForm):
-    class Meta:
-        model = Category
-        fields = ['name', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 3}),
-        }
 
 class CourseContentForm(forms.ModelForm):
     class Meta:

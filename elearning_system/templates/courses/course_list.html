@@ -9,17 +9,20 @@
                 <div class="card-header">
                     <h5 class="mb-0">Categories</h5>
                 </div>
-                <div class="list-group list-group-flush">
-                    <a href="{% url 'home' %}" 
-                       class="list-group-item list-group-item-action {% if not selected_category %}active{% endif %}">
-                        All Courses
-                    </a>
-                    {% for category in categories %}
-                        <a href="{% url 'courses:category' category.id %}" 
-                           class="list-group-item list-group-item-action {% if selected_category == category %}active{% endif %}">
-                            {{ category.name }}
+                
+                <div class="card mb-4">
+                    <div class="list-group list-group-flush">
+                        <a href="{% url 'home' %}" 
+                           class="list-group-item list-group-item-action {% if not selected_category %}active{% endif %}">
+                            All Courses
                         </a>
-                    {% endfor %}
+                        {% for category in categories %}
+                            <a href="{% url 'courses:category' category.id %}" 
+                               class="list-group-item list-group-item-action {% if selected_category == category %}active{% endif %}">
+                                {{ category.name }}
+                            </a>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 

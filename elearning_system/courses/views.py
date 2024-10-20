@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import PermissionDenied
@@ -236,3 +236,32 @@ def unenroll_course(request, course_id):
             messages.error(request, "You are not enrolled in this course")
             
     return redirect('courses:detail', course_id=course_id)
+
+def is_staff(user):
+    return user.is_authenticated and user.is_staff
+
+def can_create_category(user):
+    return user.is_authenticated and (user.is_staff or hasattr(user, 'instructor_profile'))
+
+@login_required
+@user_passes_test(can_create_category)
+def create_category(request):
+    if request.method == 'POST':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save()
+            messages.success(request, f'Category "{category.name}" created successfully!')
+            return redirect('courses:list')
+    else:
+        form = CategoryForm()
+    
+    return render(request, 'courses/category_form.html', {
+        'form': form,
+        'title': 'Create Category'
+    })
+
+def category_list(request):
+    categories = Category.objects.all().order_by('name')
+    return render(request, 'courses/category_list.html', {
+        'categories': categories
+    })
