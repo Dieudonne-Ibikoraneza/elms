@@ -218,21 +218,6 @@
                 </a>
             </div>
             {% endif %}
-
-            {% if user == course.instructor %}
-                <div class="mt-4">
-                    <h4>Enrolled Students</h4>
-                    {% for enrollment in course.enrollments.all %}
-                        <div class="mb-2">
-                            <a href="{% url 'users:view_profile' enrollment.student.id %}">
-                                {{ enrollment.student.get_full_name|default:enrollment.student.username }}
-                            </a>
-                        </div>
-                    {% empty %}
-                        <p class="text-muted">No students enrolled yet.</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
         </div>
     </div>
 </div>
