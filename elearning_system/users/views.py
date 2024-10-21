@@ -16,6 +16,7 @@ import logging
 from .models import Skill
 from .forms import SkillsUpdateForm
 from django.urls import reverse
+from courses.models import Course
 
 User = get_user_model()
 
@@ -198,3 +199,43 @@ def update_avatar(request):
         'success': False,
         'message': 'Invalid request'
     }, status=400)
+
+@login_required
+def view_profile(request, user_id):
+    profile_user = get_object_or_404(User, id=user_id)
+    viewer_is_instructor = hasattr(request.user, 'instructor_profile')
+    is_own_profile = request.user == profile_user
+    
+    context = {
+        'profile_user': profile_user,
+        'viewer_is_instructor': viewer_is_instructor,
+        'is_own_profile': is_own_profile,
+    }
+
+    # If viewing an instructor's profile
+    if hasattr(profile_user, 'instructor_profile'):
+        courses = Course.objects.filter(instructor=profile_user)
+        public_courses = courses.filter(status='published')
+        
+        context.update({
+            'is_instructor': True,
+            'courses': public_courses,
+            'courses_count': public_courses.count(),
+        })
+        
+        # Only show student count to the profile owner
+        if is_own_profile:
+            context['students_count'] = Enrollment.objects.filter(
+                course__instructor=profile_user
+            ).count()
+    
+    # If viewing a student's profile
+    elif hasattr(profile_user, 'student_profile'):
+        enrolled_courses = Course.objects.filter(enrollments__student=profile_user)
+        if is_own_profile or viewer_is_instructor:
+            context['enrolled_courses'] = enrolled_courses
+            context['courses_count'] = enrolled_courses.count()
+        
+        context['is_student'] = True
+
+    return render(request, 'users/view_profile.html', context)

@@ -14,4 +14,5 @@ urlpatterns = [
     path('update-skills/', views.update_skills, name='update_skills'),
     path('profile/', views.profile, name='profile'),
     path('skills/update/', views.update_skills, name='update_skills'),
+    path('profile/<int:user_id>/', views.view_profile, name='view_profile'),
 ]
