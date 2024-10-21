@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import PermissionDenied
+from django.http import HttpResponseForbidden
 from .models import Course, Category, Enrollment, CourseContent
 from .forms import CourseForm, CourseContentForm
 
@@ -198,20 +199,20 @@ def delete_course_content(request, course_id, content_id):
 def delete_course(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     
-    # Check if the user is the course instructor
-    if course.instructor != request.user and not request.user.is_staff:
-        raise PermissionDenied
+    # Check if the logged-in user is the course instructor
+    if request.user != course.instructor:
+        messages.error(request, "You don't have permission to delete this course.")
+        return HttpResponseForbidden("You don't have permission to delete this course.")
     
     if request.method == 'POST':
         course_title = course.title
         course.delete()
         messages.success(request, f'Course "{course_title}" has been deleted successfully.')
-        return redirect('home')
+        return redirect('courses:list')
     
-    context = {
+    return render(request, 'courses/delete_course.html', {
         'course': course
-    }
-    return render(request, 'courses/delete_course.html', context)
+    })
 
 @login_required
 def unenroll_course(request, course_id):
