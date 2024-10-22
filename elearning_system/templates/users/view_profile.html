@@ -6,129 +6,87 @@
         <!-- Profile Information -->
         <div class="col-md-4">
             <div class="card">
-                <div class="card-body text-center">
-                    {% if profile_user.profile_picture %}
-                        <img src="{{ profile_user.profile_picture.url }}" alt="Profile Picture" 
-                             class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
-                    {% else %}
-                        <img src="https://via.placeholder.com/150" alt="Default Profile Picture" 
-                             class="rounded-circle mb-3">
-                    {% endif %}
-                    
-                    <h3>{{ profile_user.get_full_name }}</h3>
-                    <p class="text-muted">
-                        {% if is_instructor %}
-                            Instructor
-                        {% elif is_student %}
-                            Student
+                <div class="card-body">
+                    <h3 class="card-title">{{ profile_user.get_full_name|default:profile_user.username }}</h3>
+                    {% if courses_count %}
+                        <p class="text-muted">Instructor</p>
+                        <p>Courses Created: {{ courses_count }}</p>
+                        {% if is_own_profile %}
+                            <p>Total Students: {{ total_students }}</p>
                         {% endif %}
-                    </p>
-                    
-                    {% if profile_user.email %}
-                        <p><i class="fas fa-envelope"></i> {{ profile_user.email }}</p>
                     {% endif %}
-                    
-                    <p><i class="fas fa-calendar"></i> Joined {{ profile_user.date_joined|date }}</p>
                 </div>
             </div>
         </div>
 
-        <!-- Activity Information -->
+        <!-- Courses Section -->
         <div class="col-md-8">
-            {% if is_instructor %}
+            {% if courses %}
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h4>Instructor Statistics</h4>
+                        <h4>Created Courses ({{ courses_count }})</h4>
                     </div>
                     <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col">
-                                <h3>{{ courses_count }}</h3>
-                                <p class="text-muted">Published Courses</p>
-                            </div>
-                            {% if viewer_is_instructor %}
-                                <div class="col">
-                                    <h3>{{ students_count }}</h3>
-                                    <p class="text-muted">Total Students</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Published Courses</h4>
-                    </div>
-                    <div class="card-body">
-                        {% if courses %}
-                            <div class="row">
-                                {% for course in courses %}
-                                    <div class="col-md-6 mb-3">
-                                        <div class="card h-100">
-                                            {% if course.thumbnail %}
-                                                <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
-                                            {% endif %}
-                                            <div class="card-body">
-                                                <h5 class="card-title">{{ course.title }}</h5>
-                                                <p class="card-text">{{ course.description|truncatewords:20 }}</p>
-                                                <a href="{% url 'courses:detail' course.id %}" class="btn btn-primary">View Course</a>
-                                            </div>
+                        <div class="row">
+                            {% for course in courses %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        {% if course.image %}
+                                            <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ course.title }}</h5>
+                                            <p class="card-text">{{ course.description|truncatewords:20 }}</p>
+                                            <a href="{% url 'courses:detail' course.id %}" class="btn btn-primary">View Course</a>
                                         </div>
                                     </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <p class="text-muted">No published courses yet.</p>
-                        {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
-            {% endif %}
-
-            {% if is_student %}
-                {% if enrolled_courses or user == profile_user or viewer_is_instructor %}
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h4>Student Statistics</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="row text-center">
-                                <div class="col-12">
-                                    <h3>{{ courses_count|default:"0" }}</h3>
-                                    <p class="text-muted">Enrolled Courses</p>
-                                </div>
-                            </div>
+            {% else %}
+                {% if is_own_profile %}
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h4>Start Your Teaching Journey</h4>
+                            <p class="text-muted">You haven't created any courses yet.</p>
+                            <a href="{% url 'courses:create' %}" class="btn btn-primary">Create Your First Course</a>
                         </div>
                     </div>
-
+                {% else %}
                     <div class="card">
-                        <div class="card-header">
-                            <h4>Enrolled Courses</h4>
-                        </div>
-                        <div class="card-body">
-                            {% if enrolled_courses %}
-                                <div class="row">
-                                    {% for course in enrolled_courses %}
-                                        <div class="col-md-6 mb-3">
-                                            <div class="card h-100">
-                                                {% if course.thumbnail %}
-                                                    <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
-                                                {% endif %}
-                                                <div class="card-body">
-                                                    <h5 class="card-title">{{ course.title }}</h5>
-                                                    <p class="card-text">{{ course.description|truncatewords:20 }}</p>
-                                                    <a href="{% url 'courses:detail' course.id %}" class="btn btn-primary">View Course</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="text-muted">Not enrolled in any courses yet.</p>
-                            {% endif %}
+                        <div class="card-body text-center">
+                            <p class="text-muted">No courses created yet.</p>
                         </div>
                     </div>
                 {% endif %}
+            {% endif %}
+
+            {% if enrolled_courses %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h4>Enrolled Courses ({{ enrolled_courses_count }})</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for course in enrolled_courses %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        {% if course.image %}
+                                            <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ course.title }}</h5>
+                                            <p class="card-text">{{ course.description|truncatewords:20 }}</p>
+                                            <a href="{% url 'courses:detail' course.id %}" class="btn btn-primary">Continue Learning</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
             {% endif %}
         </div>
     </div>

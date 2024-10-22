@@ -203,39 +203,40 @@ def update_avatar(request):
 @login_required
 def view_profile(request, user_id):
     profile_user = get_object_or_404(User, id=user_id)
-    viewer_is_instructor = hasattr(request.user, 'instructor_profile')
-    is_own_profile = request.user == profile_user
+    
+    # Debug prints to help us understand what's happening
+    print(f"Viewing profile for user: {profile_user.username}")
+    print(f"Courses created by user: {Course.objects.filter(instructor=profile_user).count()}")
     
     context = {
         'profile_user': profile_user,
-        'viewer_is_instructor': viewer_is_instructor,
-        'is_own_profile': is_own_profile,
+        'is_own_profile': request.user == profile_user
     }
 
-    # If viewing an instructor's profile
-    if hasattr(profile_user, 'instructor_profile'):
-        courses = Course.objects.filter(instructor=profile_user)
-        public_courses = courses.filter(status='published')
-        
+    # Check if user has created any courses (this makes them an instructor)
+    instructor_courses = Course.objects.filter(instructor=profile_user)
+    
+    if instructor_courses.exists():
         context.update({
             'is_instructor': True,
-            'courses': public_courses,
-            'courses_count': public_courses.count(),
+            'courses': instructor_courses,
+            'courses_count': instructor_courses.count()
         })
         
-        # Only show student count to the profile owner
-        if is_own_profile:
-            context['students_count'] = Enrollment.objects.filter(
-                course__instructor=profile_user
-            ).count()
+        if request.user == profile_user:
+            # Add additional instructor stats for own profile
+            from django.db.models import Count
+            context['total_students'] = profile_user.course_set.aggregate(
+                total_students=Count('enrolled_students')
+            )['total_students']
     
-    # If viewing a student's profile
-    elif hasattr(profile_user, 'student_profile'):
-        enrolled_courses = Course.objects.filter(enrollments__student=profile_user)
-        if is_own_profile or viewer_is_instructor:
-            context['enrolled_courses'] = enrolled_courses
-            context['courses_count'] = enrolled_courses.count()
-        
-        context['is_student'] = True
+    # Check for enrolled courses (student view)
+    enrolled_courses = Course.objects.filter(enrolled_students=profile_user)
+    if enrolled_courses.exists():
+        context.update({
+            'is_student': True,
+            'enrolled_courses': enrolled_courses,
+            'enrolled_courses_count': enrolled_courses.count()
+        })
 
     return render(request, 'users/view_profile.html', context)
