@@ -196,7 +196,7 @@
           </div>
           <div class="card-body">
             <div class="courses-grid">
-              {% if instructor_courses %} {% for course in instructor_courses %}
+              {% if courses %} {% for course in courses %}
               <div class="course-card">
                 <div class="course-image">
                   {% if course.image %}
@@ -213,11 +213,11 @@
                   <div class="course-meta">
                     <span
                       ><i class="fas fa-users"></i>
-                      {{course.enrolled_students.count }} Students</span
+                      {{course.enrolled_students.count|default:"0" }} Students</span
                     >
                     <span
                       ><i class="fas fa-star"></i>
-                      {{course.average_rating|default:"New" }}</span
+                      New</span
                     >
                   </div>
                 </div>

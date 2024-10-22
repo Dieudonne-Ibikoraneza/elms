@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'courses.apps.CoursesConfig',
     'assignments.apps.AssignmentsConfig',
     'notifications.apps.NotificationsConfig',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [

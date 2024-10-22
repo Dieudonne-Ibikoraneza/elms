@@ -7,13 +7,36 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h3 class="card-title">{{ profile_user.get_full_name|default:profile_user.username }}</h3>
-                    {% if courses_count %}
-                        <p class="text-muted">Instructor</p>
-                        <p>Courses Created: {{ courses_count }}</p>
-                        {% if is_own_profile %}
-                            <p>Total Students: {{ total_students }}</p>
+                    <div class="text-center mb-3">
+                        {% if profile_user.profile_picture %}
+                            <img src="{{ profile_user.profile_picture.url }}" 
+                                 class="rounded-circle img-thumbnail" 
+                                 alt="Profile Picture"
+                                 style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-secondary rounded-circle mx-auto d-flex align-items-center justify-content-center"
+                                 style="width: 150px; height: 150px;">
+                                <span class="text-white h1">
+                                    {{ profile_user.get_full_name|default:profile_user.username|make_list|first|upper }}
+                                </span>
+                            </div>
                         {% endif %}
+                    </div>
+                    
+                    <h3 class="text-center">{{ profile_user.get_full_name|default:profile_user.username }}</h3>
+                    {% if is_instructor %}
+                        <p class="text-center text-muted mb-3">Instructor</p>
+                        <div class="text-center">
+                            <div class="badge bg-primary mb-2">{{ courses_count }} Course{{ courses_count|pluralize }}</div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if is_own_profile %}
+                        <div class="d-grid gap-2 mt-3">
+                            <a href="{% url 'users:edit_profile' %}" class="btn btn-outline-primary">
+                                Edit Profile
+                            </a>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -22,9 +45,14 @@
         <!-- Courses Section -->
         <div class="col-md-8">
             {% if courses %}
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h4>Created Courses ({{ courses_count }})</h4>
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Created Courses</h4>
+                        {% if is_own_profile %}
+                            <a href="{% url 'courses:create' %}" class="btn btn-primary btn-sm">
+                                Create New Course
+                            </a>
+                        {% endif %}
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -32,12 +60,30 @@
                                 <div class="col-md-6 mb-3">
                                     <div class="card h-100">
                                         {% if course.image %}
-                                            <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
+                                            <img src="{{ course.image.url }}" 
+                                                 class="card-img-top" 
+                                                 alt="{{ course.title }}"
+                                                 style="height: 200px; object-fit: cover;">
                                         {% endif %}
                                         <div class="card-body">
                                             <h5 class="card-title">{{ course.title }}</h5>
-                                            <p class="card-text">{{ course.description|truncatewords:20 }}</p>
-                                            <a href="{% url 'courses:detail' course.id %}" class="btn btn-primary">View Course</a>
+                                            {% if course.description %}
+                                                <p class="card-text text-muted">
+                                                    {{ course.description|truncatewords:20 }}
+                                                </p>
+                                            {% endif %}
+                                            
+                                            <div class="mt-3">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="badge bg-secondary">
+                                                        {{ course.enrolled_students.count }} Student{{ course.enrolled_students.count|pluralize }}
+                                                    </span>
+                                                    <a href="{% url 'courses:detail' course.id %}" 
+                                                       class="btn btn-primary btn-sm">
+                                                        View Course
+                                                    </a>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -48,16 +94,18 @@
             {% else %}
                 {% if is_own_profile %}
                     <div class="card">
-                        <div class="card-body text-center">
+                        <div class="card-body text-center py-5">
                             <h4>Start Your Teaching Journey</h4>
-                            <p class="text-muted">You haven't created any courses yet.</p>
-                            <a href="{% url 'courses:create' %}" class="btn btn-primary">Create Your First Course</a>
+                            <p class="text-muted mb-4">Create your first course and begin sharing your knowledge!</p>
+                            <a href="{% url 'courses:create' %}" class="btn btn-primary">
+                                Create Your First Course
+                            </a>
                         </div>
                     </div>
                 {% else %}
                     <div class="card">
-                        <div class="card-body text-center">
-                            <p class="text-muted">No courses created yet.</p>
+                        <div class="card-body text-center py-5">
+                            <p class="text-muted mb-0">No courses created yet.</p>
                         </div>
                     </div>
                 {% endif %}
@@ -66,7 +114,7 @@
             {% if enrolled_courses %}
                 <div class="card mt-4">
                     <div class="card-header">
-                        <h4>Enrolled Courses ({{ enrolled_courses_count }})</h4>
+                        <h4 class="mb-0">Enrolled Courses</h4>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -74,12 +122,22 @@
                                 <div class="col-md-6 mb-3">
                                     <div class="card h-100">
                                         {% if course.image %}
-                                            <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
+                                            <img src="{{ course.image.url }}" 
+                                                 class="card-img-top" 
+                                                 alt="{{ course.title }}"
+                                                 style="height: 200px; object-fit: cover;">
                                         {% endif %}
                                         <div class="card-body">
                                             <h5 class="card-title">{{ course.title }}</h5>
-                                            <p class="card-text">{{ course.description|truncatewords:20 }}</p>
-                                            <a href="{% url 'courses:detail' course.id %}" class="btn btn-primary">Continue Learning</a>
+                                            <p class="text-muted">
+                                                Instructor: {{ course.instructor.get_full_name|default:course.instructor.username }}
+                                            </p>
+                                            <div class="mt-3">
+                                                <a href="{% url 'courses:detail' course.id %}" 
+                                                   class="btn btn-primary btn-sm">
+                                                    Continue Learning
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

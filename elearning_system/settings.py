@@ -12,6 +12,7 @@ INSTALLED_APPS = [
     'notifications.apps.NotificationsConfig',
     # Third party apps
     'crispy_forms',
+    'django_extensions'
 ]
 
 # Custom user model
