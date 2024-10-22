@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from courses.models import Course
-from .forms import UserRegistrationForm  # You'll need to create this
+from .forms import UserRegistrationForm, UserUpdateForm, ProfileUpdateForm  # You'll need to create this
 
 User = get_user_model()
 
@@ -27,10 +27,24 @@ def profile(request):
 @login_required
 def edit_profile(request):
     if request.method == 'POST':
-        # Handle profile editing
-        messages.success(request, 'Profile updated successfully!')
-        return redirect('users:profile')
-    return render(request, 'users/edit_profile.html')
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        profile_form = ProfileUpdateForm(request.POST, instance=request.user.profile)
+        
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('users:profile')
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+        profile_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form
+    }
+    
+    return render(request, 'users/edit_profile.html', context)
 
 @login_required
 def update_expertise(request):
