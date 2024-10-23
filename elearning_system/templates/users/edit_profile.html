@@ -1,194 +1,418 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block content %}
-<div class="profile-wrapper">
-    <div class="profile-content">
-        <div class="card">
-            <div class="card-header">
-                <h2><i class="fas fa-user-edit"></i> Edit Profile</h2>
-            </div>
-            <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    
-                    <!-- Profile Picture Section -->
-                    <div class="section mb-4">
-                        <h3 class="section-title">Profile Picture</h3>
-                        <div class="profile-picture-section">
-                            <div class="current-picture">
-                                {% if user.profile.profile_picture %}
-                                    <img src="{{ user.profile.profile_picture.url }}" 
-                                         alt="Current Profile Picture" 
-                                         class="profile-preview">
-                                {% else %}
-                                    <div class="profile-placeholder">
-                                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="picture-upload">
-                                <label for="{{ profile_form.profile_picture.id_for_label }}" class="form-label">
-                                    Change Profile Picture
-                                </label>
-                                {{ profile_form.profile_picture }}
-                                <small class="form-text text-muted">Upload a new profile picture (optional)</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- User Information Section -->
-                    <div class="section mb-4">
-                        <h3 class="section-title">Personal Information</h3>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ user_form.first_name.id_for_label }}" class="form-label">First Name</label>
-                                {{ user_form.first_name }}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ user_form.last_name.id_for_label }}" class="form-label">Last Name</label>
-                                {{ user_form.last_name }}
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="{{ user_form.email.id_for_label }}" class="form-label">Email</label>
-                            {{ user_form.email }}
-                        </div>
-                        <div class="mb-3">
-                            <label for="{{ user_form.username.id_for_label }}" class="form-label">Username</label>
-                            {{ user_form.username }}
-                        </div>
-                    </div>
-
-                    <!-- Profile Information Section -->
-                    <div class="section mb-4">
-                        <h3 class="section-title">Bio</h3>
-                        <div class="mb-3">
-                            <label for="{{ profile_form.bio.id_for_label }}" class="form-label">About Me</label>
-                            {{ profile_form.bio }}
-                        </div>
-                    </div>
-
-                    <!-- Form Errors -->
-                    {% if user_form.errors or profile_form.errors %}
-                        <div class="alert alert-danger">
-                            {% for field in user_form %}
-                                {% for error in field.errors %}
-                                    <p>{{ field.label }}: {{ error }}</p>
-                                {% endfor %}
-                            {% endfor %}
-                            {% for field in profile_form %}
-                                {% for error in field.errors %}
-                                    <p>{{ field.label }}: {{ error }}</p>
-                                {% endfor %}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    <!-- Submit Button -->
-                    <div class="text-center mt-4">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Save Changes
-                        </button>
-                        <a href="{% url 'users:profile' %}" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Cancel
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
 <style>
-.section {
-    background-color: #fff;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.edit-profile-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.profile-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.profile-header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    padding: 2rem;
+    color: white;
+    text-align: center;
+}
+
+.profile-picture-section {
+    position: relative;
+    margin-top: -75px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.profile-picture-container {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    position: relative;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    background: #f3f4f6;
+}
+
+.profile-picture {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #6366f1;
+    background: #e0e7ff;
+}
+
+.picture-upload-btn {
+    position: absolute;
+    bottom: 0;
+    right: 50%;
+    transform: translateX(50%);
+    background: #6366f1;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid white;
+}
+
+.picture-upload-btn:hover {
+    background: #4f46e5;
+}
+
+.profile-form {
+    padding: 2rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
 }
 
 .section-title {
-    font-size: 1.2rem;
-    color: #333;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #e9ecef;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
 }
 
 .form-label {
+    display: block;
     font-weight: 500;
-    color: #495057;
+    color: #4b5563;
+    margin-bottom: 0.5rem;
 }
 
-input[type="text"],
-input[type="email"],
-textarea {
+.form-control {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    transition: border-color 0.15s ease-in-out;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
 }
 
-input[type="text"]:focus,
-input[type="email"]:focus,
-textarea:focus {
-    border-color: #80bdff;
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+.form-control:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    outline: none;
+}
+
+.form-control-plaintext {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.btn-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
 }
 
 .btn {
-    padding: 8px 20px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
     font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
+    background: #6366f1;
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #4f46e5;
 }
 
 .btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    margin-left: 10px;
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
 }
 
 .alert {
-    margin-top: 20px;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.alert-danger {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+/* Modal styles for image cropper */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.cropper-container {
+    max-height: 400px;
+    margin-bottom: 1rem;
 }
 </style>
+{% endblock %}
 
+{% block content %}
+<div class="edit-profile-container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <h1 class="text-2xl font-bold">Edit Profile</h1>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="profile-form">
+            {% csrf_token %}
+
+            <!-- Profile Picture Section -->
+            <div class="profile-picture-section">
+                <div class="profile-picture-container">
+                    {% if user.profile.profile_picture %}
+                        <img src="{{ user.profile.profile_picture.url }}" 
+                             alt="Profile Picture" 
+                             class="profile-picture">
+                    {% else %}
+                        <div class="profile-placeholder">
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                <label for="profile_picture" class="picture-upload-btn">
+                    <i class="fas fa-camera"></i>
+                </label>
+                <input type="file" 
+                       id="profile_picture" 
+                       name="profile_picture" 
+                       accept="image/*" 
+                       class="hidden"
+                       style="display: none;">
+            </div>
+
+            <!-- Personal Information Section -->
+            <div class="form-section">
+                <h2 class="section-title">Personal Information</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    {{ user_form.username }}
+                    <small class="form-text">Username cannot be changed</small>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            {{ user_form.first_name }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            {{ user_form.last_name }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    {{ user_form.email }}
+                </div>
+            </div>
+
+            <!-- Bio Section -->
+            <div class="form-section">
+                <h2 class="section-title">About Me</h2>
+                <div class="form-group">
+                    {{ profile_form.bio }}
+                </div>
+            </div>
+
+            <!-- Error Messages -->
+            {% if user_form.errors or profile_form.errors %}
+            <div class="alert alert-danger">
+                {% for field in user_form %}
+                    {% for error in field.errors %}
+                        <p>{{ field.label }}: {{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+                {% for field in profile_form %}
+                    {% for error in field.errors %}
+                        <p>{{ field.label }}: {{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Form Actions -->
+            <div class="btn-group">
+                <a href="{% url 'users:profile' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Image Cropper Modal -->
+<div id="cropperModal" class="modal">
+    <div class="modal-content">
+        <div class="cropper-container">
+            <img id="cropperImage" src="" alt="Crop your image">
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-secondary" id="cancelCrop">Cancel</button>
+            <button type="button" class="btn btn-primary" id="cropImage">Crop & Save</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 <script>
-// Preview uploaded image
 document.addEventListener('DOMContentLoaded', function() {
-    const input = document.querySelector('input[type="file"]');
-    const preview = document.querySelector('.profile-preview');
-    const placeholder = document.querySelector('.profile-placeholder');
+    const fileInput = document.getElementById('profile_picture');
+    const modal = document.getElementById('cropperModal');
+    const cropperImage = document.getElementById('cropperImage');
+    let cropper = null;
 
-    input.addEventListener('change', function() {
+    fileInput.addEventListener('change', function(e) {
         if (this.files && this.files[0]) {
             const reader = new FileReader();
             
             reader.onload = function(e) {
-                if (preview) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                    if (placeholder) {
-                        placeholder.style.display = 'none';
-                    }
-                } else {
-                    const newPreview = document.createElement('img');
-                    newPreview.src = e.target.result;
-                    newPreview.classList.add('profile-preview');
-                    if (placeholder) {
-                        placeholder.parentNode.replaceChild(newPreview, placeholder);
-                    }
+                cropperImage.src = e.target.result;
+                modal.style.display = 'block';
+                
+                if (cropper) {
+                    cropper.destroy();
                 }
+                
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 1,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                });
             }
             
             reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    document.getElementById('cancelCrop').addEventListener('click', function() {
+        modal.style.display = 'none';
+        fileInput.value = '';
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    });
+
+    document.getElementById('cropImage').addEventListener('click', function() {
+        if (cropper) {
+            const canvas = cropper.getCroppedCanvas({
+                width: 300,
+                height: 300
+            });
+
+            canvas.toBlob(function(blob) {
+                const file = new File([blob], 'profile_picture.jpg', { type: 'image/jpeg' });
+                const container = new DataTransfer();
+                container.items.add(file);
+                fileInput.files = container.files;
+
+                // Update preview
+                const profilePicture = document.querySelector('.profile-picture');
+                const placeholder = document.querySelector('.profile-placeholder');
+                
+                if (profilePicture) {
+                    profilePicture.src = canvas.toDataURL();
+                } else if (placeholder) {
+                    const newImage = document.createElement('img');
+                    newImage.src = canvas.toDataURL();
+                    newImage.classList.add('profile-picture');
+                    placeholder.parentNode.replaceChild(newImage, placeholder);
+                }
+
+                modal.style.display = 'none';
+                cropper.destroy();
+                cropper = null;
+            }, 'image/jpeg');
         }
     });
 });
