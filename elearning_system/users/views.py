@@ -28,13 +28,25 @@ def profile(request):
 def edit_profile(request):
     if request.method == 'POST':
         user_form = UserUpdateForm(request.POST, instance=request.user)
-        profile_form = ProfileUpdateForm(request.POST, instance=request.user.profile)
+        profile_form = ProfileUpdateForm(
+            request.POST, 
+            request.FILES, 
+            instance=request.user.profile
+        )
         
         if user_form.is_valid() and profile_form.is_valid():
+            # Handle profile picture upload
+            if 'profile_picture' in request.FILES:
+                # Delete old profile picture if it exists
+                if request.user.profile.profile_picture:
+                    request.user.profile.profile_picture.delete()
+                
             user_form.save()
             profile_form.save()
             messages.success(request, 'Your profile has been updated successfully!')
             return redirect('users:profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         user_form = UserUpdateForm(instance=request.user)
         profile_form = ProfileUpdateForm(instance=request.user.profile)
