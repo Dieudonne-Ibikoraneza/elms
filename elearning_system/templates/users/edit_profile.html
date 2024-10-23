@@ -230,7 +230,7 @@
             <div class="profile-picture-section">
                 <div class="profile-picture-container">
                     {% if user.profile.profile_picture %}
-                        <img src="{{ user.profile.profile_picture.url }}" 
+                        <img src="{{ user.profile.profile_picture.url }}?{% now 'U' %}" 
                              alt="Profile Picture" 
                              class="profile-picture">
                     {% else %}

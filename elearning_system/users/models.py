@@ -43,25 +43,24 @@ class Skill(models.Model):
         return self.name
 
 class Profile(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    user = models.OneToOneField('users.CustomUser', on_delete=models.CASCADE)
     profile_picture = models.ImageField(
         upload_to='profile_pics/',
         blank=True,
         null=True
     )
     bio = models.TextField(max_length=500, blank=True)
-    expertise = models.ManyToManyField(Expertise, blank=True)
-    skills = models.ManyToManyField(Skill, blank=True)
     
     def __str__(self):
-        return f"{self.user.username}'s profile"
+        return f'{self.user.username} Profile'
 
     def save(self, *args, **kwargs):
-        # Delete old profile picture if it's being replaced
+        # If there's an existing profile picture and we're updating with a new one
         if self.pk:
             try:
                 old_profile = Profile.objects.get(pk=self.pk)
-                if old_profile.profile_picture and self.profile_picture != old_profile.profile_picture:
+                if old_profile.profile_picture and self.profile_picture and old_profile.profile_picture != self.profile_picture:
+                    # Delete the old image file
                     if os.path.isfile(old_profile.profile_picture.path):
                         os.remove(old_profile.profile_picture.path)
             except Profile.DoesNotExist:

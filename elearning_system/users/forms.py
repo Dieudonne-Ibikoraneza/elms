@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
-from .models import Profile
+from .models import Profile, CustomUser
 
 User = get_user_model()
 
@@ -32,21 +32,14 @@ class UserUpdateForm(forms.ModelForm):
         self.fields['username'].widget.attrs['readonly'] = True
 
 class ProfileUpdateForm(forms.ModelForm):
-    profile_picture = forms.ImageField(
-        required=False,
-        widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': 'image/*'
-        })
-    )
-    bio = forms.CharField(
-        widget=forms.Textarea(attrs={
-            'rows': 4,
-            'class': 'form-control'
-        }),
-        required=False
-    )
-
     class Meta:
         model = Profile
         fields = ['profile_picture', 'bio']
+
+    def clean_profile_picture(self):
+        profile_picture = self.cleaned_data.get('profile_picture')
+        if profile_picture:
+            # Add any validation you need for the image
+            if profile_picture.size > 5 * 1024 * 1024:  # 5MB limit
+                raise forms.ValidationError("Image file too large ( > 5MB )")
+        return profile_picture
