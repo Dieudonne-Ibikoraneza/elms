@@ -55,14 +55,9 @@
           
           {% if is_owner %}
           <div class="camera-icon-wrapper">
-            <label for="profile_picture" class="camera-icon">
+            <a href="{% url 'users:edit_profile' %}" class="camera-icon">
               <i class="fas fa-camera"></i>
-              <input type="file" 
-                     id="profile_picture" 
-                     name="profile_picture" 
-                     accept="image/*" 
-                     style="display: none;">
-            </label>
+            </a>
           </div>
           {% endif %}
         </div>
@@ -447,23 +442,23 @@
     height: 32px;
     background: #6366f1;
     border-radius: 50%;
-    color: white;
+    color: white !important;
     cursor: pointer;
     border: 2px solid #ffffff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
-    overflow: visible;
+    text-decoration: none;
 }
 
 .camera-icon:hover {
     background: #4f46e5;
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    color: white !important;
 }
 
 .camera-icon i {
     font-size: 14px;
-    color: white;
 }
 </style>
 
