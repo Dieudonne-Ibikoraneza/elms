@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from courses.models import Course
 from .forms import UserRegistrationForm, UserUpdateForm, ProfileUpdateForm  # You'll need to create this
+from django.http import JsonResponse
 
 User = get_user_model()
 
@@ -27,23 +28,35 @@ def profile(request):
 @login_required
 def edit_profile(request):
     if request.method == 'POST':
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # Handle AJAX profile picture update
+            if 'profile_picture' in request.FILES:
+                profile = request.user.profile
+                if profile.profile_picture:
+                    profile.profile_picture.delete()
+                profile.profile_picture = request.FILES['profile_picture']
+                profile.save()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Profile picture updated successfully',
+                    'image_url': profile.profile_picture.url
+                })
+            return JsonResponse({
+                'success': False,
+                'message': 'No image file received'
+            })
+
+        # Handle regular form submission
         user_form = UserUpdateForm(request.POST, instance=request.user)
         profile_form = ProfileUpdateForm(
             request.POST,
             request.FILES,
             instance=request.user.profile
         )
-
+        
         if user_form.is_valid() and profile_form.is_valid():
-            # Save the user form
-            user = user_form.save()
-
-            # Handle profile picture
-            profile = profile_form.save(commit=False)
-            if 'profile_picture' in request.FILES:
-                profile.profile_picture = request.FILES['profile_picture']
-            profile.save()
-
+            user_form.save()
+            profile_form.save()
             messages.success(request, 'Your profile has been updated successfully!')
             return redirect('users:profile')
         else:
@@ -54,8 +67,7 @@ def edit_profile(request):
 
     context = {
         'user_form': user_form,
-        'profile_form': profile_form,
-        'profile_picture_url': request.user.profile.profile_picture.url if request.user.profile.profile_picture else None,
+        'profile_form': profile_form
     }
     
     return render(request, 'users/edit_profile.html', context)

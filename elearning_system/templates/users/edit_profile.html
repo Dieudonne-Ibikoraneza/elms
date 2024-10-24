@@ -343,6 +343,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const cropperImage = document.getElementById('cropperImage');
     let cropper = null;
 
+    // Function to update profile picture preview
+    function updateProfilePicture(imageUrl) {
+        const pictureContainer = document.querySelector('.profile-picture-container');
+        const existingPicture = pictureContainer.querySelector('.profile-picture');
+        const placeholder = pictureContainer.querySelector('.profile-placeholder');
+
+        if (imageUrl) {
+            const img = existingPicture || document.createElement('img');
+            img.src = imageUrl;
+            img.classList.add('profile-picture');
+            img.alt = 'Profile Picture';
+
+            if (!existingPicture) {
+                if (placeholder) {
+                    placeholder.remove();
+                }
+                pictureContainer.appendChild(img);
+            }
+        }
+    }
+
+    // Handle file input change
     fileInput.addEventListener('change', function(e) {
         if (this.files && this.files[0]) {
             const reader = new FileReader();
@@ -374,6 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Handle crop cancellation
     document.getElementById('cancelCrop').addEventListener('click', function() {
         modal.style.display = 'none';
         fileInput.value = '';
@@ -383,6 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Handle crop completion
     document.getElementById('cropImage').addEventListener('click', function() {
         if (cropper) {
             const canvas = cropper.getCroppedCanvas({
@@ -391,30 +415,65 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             canvas.toBlob(function(blob) {
+                // Create a new File object
                 const file = new File([blob], 'profile_picture.jpg', { type: 'image/jpeg' });
-                const container = new DataTransfer();
-                container.items.add(file);
-                fileInput.files = container.files;
-
-                // Update preview
-                const profilePicture = document.querySelector('.profile-picture');
-                const placeholder = document.querySelector('.profile-placeholder');
                 
-                if (profilePicture) {
-                    profilePicture.src = canvas.toDataURL();
-                } else if (placeholder) {
-                    const newImage = document.createElement('img');
-                    newImage.src = canvas.toDataURL();
-                    newImage.classList.add('profile-picture');
-                    placeholder.parentNode.replaceChild(newImage, placeholder);
-                }
+                // Create a FormData object and append the file
+                const formData = new FormData();
+                formData.append('profile_picture', file);
+                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 
+                // Send the file to the server
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the profile picture preview
+                        updateProfilePicture(canvas.toDataURL());
+                        messages.success('Profile picture updated successfully!');
+                    } else {
+                        messages.error('Failed to update profile picture.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    messages.error('An error occurred while updating the profile picture.');
+                });
+
+                // Update the preview immediately
+                updateProfilePicture(canvas.toDataURL());
+
+                // Close the modal
                 modal.style.display = 'none';
                 cropper.destroy();
                 cropper = null;
-            }, 'image/jpeg');
+            }, 'image/jpeg', 0.8);
         }
     });
+
+    // Messages handling
+    const messages = {
+        success: function(message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success';
+            alertDiv.textContent = message;
+            document.querySelector('.profile-form').prepend(alertDiv);
+            setTimeout(() => alertDiv.remove(), 3000);
+        },
+        error: function(message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger';
+            alertDiv.textContent = message;
+            document.querySelector('.profile-form').prepend(alertDiv);
+            setTimeout(() => alertDiv.remove(), 3000);
+        }
+    };
 });
 </script>
 {% endblock %} 
