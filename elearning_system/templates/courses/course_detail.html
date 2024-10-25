@@ -167,7 +167,7 @@
                     <h5 class="mb-0">Course Instructor</h5>
                 </div>
                 <div class="card-body">
-                    <a href="{% url 'users:view_profile' course.instructor.id %}" class="text-decoration-none">
+                    <a href="{% url 'users:view_profile' user_id=course.instructor.id %}" class="instructor-link">
                         <p class="mb-0">
                             <i class="fas fa-chalkboard-teacher"></i>
                         {{ course.instructor.get_full_name }}
@@ -194,7 +194,7 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-0">
-                                        <a href="{% url 'users:profile' enrollment.student.id %}" 
+                                        <a href="{% url 'users:view_profile' user_id=enrollment.student.id %}" 
                                            class="text-decoration-none">
                                             {{ enrollment.student.get_full_name }}
                                         </a>

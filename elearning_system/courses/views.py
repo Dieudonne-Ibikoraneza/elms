@@ -33,27 +33,18 @@ def course_list(request):
 @login_required
 def course_detail(request, course_id):
     course = get_object_or_404(Course, id=course_id)
-    is_course_instructor = course.instructor == request.user
-    is_enrolled = False
-    
-    if not is_course_instructor:
-        # Check if the student is enrolled
-        is_enrolled = Enrollment.objects.filter(
-            student=request.user,
-            course=course
-        ).exists()
-    
     context = {
         'course': course,
-        'is_course_instructor': is_course_instructor,
-        'is_enrolled': is_enrolled,
+        'instructor': course.instructor,
+        'is_course_instructor': course.instructor == request.user,
+        'is_enrolled': False,
     }
     
     # Only fetch course content if user is instructor or enrolled student
-    if is_course_instructor or is_enrolled:
+    if context['is_course_instructor'] or context['is_enrolled']:
         context['course_contents'] = course.contents.all().order_by('order')
     
-    if is_course_instructor:
+    if context['is_course_instructor']:
         enrolled_students = (Enrollment.objects
             .filter(course=course)
             .select_related('student')

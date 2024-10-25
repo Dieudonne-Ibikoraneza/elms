@@ -22,7 +22,7 @@ class Course(models.Model):
     instructor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='courses'
+        related_name='courses_created'
     )
     category = models.ForeignKey(
         Category,

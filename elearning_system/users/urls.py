@@ -12,7 +12,7 @@ urlpatterns = [
     
     # Profile views - order matters!
     path('profile/edit/', views.edit_profile, name='edit_profile'),
-    path('profile/me/', views.profile, name='profile'),
+    path('profile/me/', views.view_profile, name='my_profile'),
     path('profile/<int:user_id>/', views.view_profile, name='view_profile'),
     
     # Skills and expertise

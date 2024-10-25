@@ -21,9 +21,31 @@ def register(request):
     return render(request, 'users/register.html', {'form': form})
 
 @login_required
-def profile(request):
-    """View for user's own profile"""
-    return view_profile(request, request.user.id)
+def view_profile(request, user_id=None):
+    if user_id is None:
+        # Viewing own profile
+        profile_user = request.user
+    else:
+        # Viewing someone else's profile
+        profile_user = get_object_or_404(get_user_model(), id=user_id)
+    
+    is_owner = profile_user == request.user
+    is_instructor = profile_user.is_instructor
+
+    # Get courses if user is instructor
+    if is_instructor:
+        instructor_courses = Course.objects.filter(instructor=profile_user)
+    else:
+        instructor_courses = None
+
+    context = {
+        'profile_user': profile_user,
+        'is_owner': is_owner,
+        'is_instructor': is_instructor,
+        'instructor_courses': instructor_courses,
+    }
+    
+    return render(request, 'users/view_profile.html', context)
 
 @login_required
 def edit_profile(request):
@@ -85,36 +107,3 @@ def update_skills(request):
         # Handle skills update
         messages.success(request, 'Skills updated successfully!')
     return redirect('users:profile')
-
-@login_required
-def view_profile(request, user_id):
-    profile_user = get_object_or_404(User, id=user_id)
-    courses = Course.objects.filter(instructor=profile_user)
-    
-    # Calculate total students
-    total_students = 0
-    for course in courses:
-        if hasattr(course, 'enrolled_students'):
-            total_students += course.enrolled_students.count()
-    
-    context = {
-        'profile_user': profile_user,
-        'is_owner': request.user == profile_user,
-        'is_instructor': courses.exists(),
-        'courses': courses,
-        'total_courses': courses.count(),
-        'total_students': total_students,
-        'average_rating': 0.0,  # Default value
-        'enrolled_courses': Course.objects.filter(enrolled_students=profile_user),
-        'completion_rate': '0%',  # Default value
-    }
-    
-    # Add profile-related context if profile exists
-    if hasattr(profile_user, 'profile'):
-        context.update({
-            'bio': profile_user.profile.bio if hasattr(profile_user.profile, 'bio') else '',
-            'expertise': profile_user.profile.expertise.all() if hasattr(profile_user.profile, 'expertise') else [],
-            'skills': profile_user.profile.skills.all() if hasattr(profile_user.profile, 'skills') else [],
-        })
-    
-    return render(request, 'users/profile.html', context)
