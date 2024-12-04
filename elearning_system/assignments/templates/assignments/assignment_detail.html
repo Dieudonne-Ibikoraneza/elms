@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ assignment.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h2 class="text-2xl font-bold mb-4">{{ assignment.title }}</h2>
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <div class="mb-4">
+            <p class="text-gray-600">Due: {{ assignment.due_date }}</p>
+            <p class="text-gray-600">Max Score: {{ assignment.max_score }}</p>
+        </div>
+        
+        <div class="prose max-w-none mb-6">
+            {{ assignment.description|linebreaks }}
+        </div>
+
+        {% if user.is_student %}
+            {% if submission %}
+                <div class="bg-green-50 p-4 rounded-md mb-4">
+                    <h3 class="text-green-800 font-semibold">Your Submission</h3>
+                    <p>Submitted on: {{ submission.submitted_at }}</p>
+                    {% if submission.score %}
+                        <p>Score: {{ submission.score }}/{{ assignment.max_score }}</p>
+                    {% endif %}
+                </div>
+            {% else %}
+                <form method="post" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                        Submit Assignment
+                    </button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

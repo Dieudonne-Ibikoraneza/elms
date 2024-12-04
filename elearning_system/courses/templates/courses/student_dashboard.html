@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard{% endblock title %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h2 class="text-2xl font-bold mb-4">Student Dashboard</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for enrollment in enrollments %}
+        <div class="bg-white p-4 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold">{{ enrollment.course.title }}</h3>
+            <p>Progress: {{ enrollment.progress }}%</p>
+            <a href="{% url 'course_detail' enrollment.course.pk %}" class="text-indigo-600 hover:underline">View Course</a>
+        </div>
+        {% empty %}
+        <p>No enrollments found.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %}
