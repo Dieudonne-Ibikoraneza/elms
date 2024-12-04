@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}E-Learning System{% endblock %}</title>
+    {% load static %}
+    {% load tailwind_tags %}
+    {% tailwind_css %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <a href="{% url 'home' %}" class="flex items-center text-xl font-bold text-indigo-600">
+                        E-Learning
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        {% if user.is_instructor %}
+                            <a href="{% url 'instructor_dashboard' %}" class="text-gray-700 hover:text-indigo-600">Dashboard</a>
+                        {% else %}
+                            <a href="{% url 'student_dashboard' %}" class="text-gray-700 hover:text-indigo-600">Dashboard</a>
+                        {% endif %}
+                        <a href="{% url 'profile' %}" class="text-gray-700 hover:text-indigo-600">Profile</a>
+                        <a href="{% url 'logout' %}" class="text-gray-700 hover:text-indigo-600">Logout</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-gray-700 hover:text-indigo-600">Login</a>
+                        <a href="{% url 'student_signup' %}" class="text-gray-700 hover:text-indigo-600">Sign Up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-white mt-auto">
+        <div class="max-w-7xl mx-auto py-4 px-4 text-center text-gray-600">
+            <p>&copy; {% now "Y" %} E-Learning System. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -8,6 +8,7 @@ class Course(models.Model):
     students = models.ManyToManyField(User, through='Enrollment', related_name='courses_enrolled')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    cover_image = models.ImageField(upload_to='course_images/', null=True, blank=True)
     
     def __str__(self):
         return self.title
